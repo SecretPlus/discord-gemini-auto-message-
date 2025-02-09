@@ -61,7 +61,7 @@ sudo apt update && sudo apt upgrade -y
 apt install python3-pip
 apt install python3-venv
 python3 -m venv discord
-source discord/bin/activate
+pip install python-dotenv
 pip install -r requirements.txt 
 ```
 
