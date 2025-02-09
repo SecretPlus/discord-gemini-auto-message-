@@ -1,4 +1,4 @@
-# test Get your discord token:
+#  Get your discord token:
 
 first Login your discord account
 Go to developer mode (F12)
@@ -29,7 +29,7 @@ get discord token and save
 
 
 
-# test HOW TO GET GEMINI API :
+#  HOW TO GET GEMINI API :
 
 go to : https://aistudio.google.com/apikey
 
@@ -38,7 +38,6 @@ Create API Key
 Copy API Key
 
     
-#guide for discord auto
 
 ```
 git clone https://github.com/papa-multi/discord-gemini-auto-message-.git   
@@ -65,20 +64,20 @@ pip install python-dotenv
 pip install -r requirements.txt 
 ```
 
-# test replace discord token and gemeni api 
+#  replace discord token and gemeni api 
 ```
 nano .env
 ```
 
 ctrl X+Y  ENTER 
 
-# test start bot 
+# start bot 
 
 ```
 python3 discord.py 
 ```
 
-# test set channel id 
+# set channel id 
 
 Go to the channel where you want the bot to be active.
 
