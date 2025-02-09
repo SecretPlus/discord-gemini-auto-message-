@@ -56,7 +56,7 @@ def generate_reply(prompt, google_api_key, use_google_ai=True):
     Generates a reply to the user's message using Google Gemini AI or random responses.
     """
     if use_google_ai:
-        url = f'https://generativelanguage.googleapis.com/v1beta/models/YOUR_FINE_TUNED_MODEL:generateContent?key={google_api_key}'
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/projects/your-project-id/locations/your-location/models/your-model-name:generateContent?key={google_api_key}'
         headers = {'Content-Type': 'application/json'}
 
         # Enhance the prompt
