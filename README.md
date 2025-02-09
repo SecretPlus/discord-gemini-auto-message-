@@ -33,9 +33,9 @@ get discord token and save
 
 go to : https://aistudio.google.com/apikey
 
-    Login with your google accounts
-    Create API Key
-    Copy API Key
+Login with your google accounts
+Create API Key
+Copy API Key
 
     
 #guide for discord auto
