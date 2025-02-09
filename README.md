@@ -1,8 +1,8 @@
-####Get your discord token:
+#Get your discord token:
 
 first Login your discord account
 Go to developer mode (F12)
-GO to console   type    (allow pasting )
+GO to console   type    ```allow pasting```
 
 copy and paste 
 
@@ -38,16 +38,24 @@ go to : https://aistudio.google.com/apikey
     Copy API Key
 
     
-####guide for discord auto
+#guide for discord auto
 
-```git clone    ```
+```
+git clone    
+```
 
  
-```screen -S discord```
+```
+screen -S discord
+```
 
-```cd discord-gmni```
+```
+cd discord-gmni
+```
 
-```sudo apt update && sudo apt upgrade -y```
+```
+sudo apt update && sudo apt upgrade -y
+```
 
 ```
 apt install python3-pip
@@ -57,8 +65,10 @@ source discord/bin/activate
 pip install -r requirements.txt 
 ```
 
-###replace discord token and gemeni api 
-```nano .env```
+#replace discord token and gemeni api 
+```
+nano .env
+```
 
 ctrl X+Y  ENTER 
 
@@ -68,7 +78,7 @@ ctrl X+Y  ENTER
 pyton3 discord.py 
 ```
 
-####set channel id 
+#set channel id 
 
 Go to the channel where you want the bot to be active.
 
