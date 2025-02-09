@@ -60,7 +60,7 @@ sudo apt update && sudo apt upgrade -y
 ```
 apt install python3-pip
 apt install python3-venv
-pyton3 -m venv discord
+python3 -m venv discord
 source discord/bin/activate
 pip install -r requirements.txt 
 ```
@@ -75,7 +75,7 @@ ctrl X+Y  ENTER
 ###start bot 
 
 ```
-pyton3 discord.py 
+python3 discord.py 
 ```
 
 #set channel id 
