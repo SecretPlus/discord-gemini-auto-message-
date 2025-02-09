@@ -41,7 +41,7 @@ go to : https://aistudio.google.com/apikey
 #guide for discord auto
 
 ```
-git clone    
+git clone https://github.com/papa-multi/discord-gemini-auto-message-.git   
 ```
 
  
@@ -50,7 +50,7 @@ screen -S discord
 ```
 
 ```
-cd discord-gmni
+cd discord-gemini-auto-message-
 ```
 
 ```
