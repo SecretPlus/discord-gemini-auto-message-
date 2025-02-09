@@ -86,7 +86,9 @@ like this
 ![discord](https://github.com/user-attachments/assets/d2dbdedc-405b-4947-8fff-1f76ba0d4f28)
 
 example
+
 Set the delay for reading new messages (in seconds): 180
+
  Set the delay for replying to messages (in seconds): 20
 
 
