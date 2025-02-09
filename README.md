@@ -1,4 +1,4 @@
-#Get your discord token:
+#test Get your discord token:
 
 first Login your discord account
 Go to developer mode (F12)
