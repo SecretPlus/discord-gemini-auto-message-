@@ -29,7 +29,7 @@ get discord token and save
 
 
 
-####HOW TO GET GEMINI API :
+# test HOW TO GET GEMINI API :
 
 go to : https://aistudio.google.com/apikey
 
@@ -65,27 +65,29 @@ pip install python-dotenv
 pip install -r requirements.txt 
 ```
 
-#replace discord token and gemeni api 
+# test replace discord token and gemeni api 
 ```
 nano .env
 ```
 
 ctrl X+Y  ENTER 
 
-###start bot 
+# test start bot 
 
 ```
 python3 discord.py 
 ```
 
-#set channel id 
+# test set channel id 
 
 Go to the channel where you want the bot to be active.
 
 like this 
 ![discord](https://github.com/user-attachments/assets/d2dbdedc-405b-4947-8fff-1f76ba0d4f28)
 
-
+example
+Set the delay for reading new messages (in seconds): 180
+ Set the delay for replying to messages (in seconds): 20
 
 
 
