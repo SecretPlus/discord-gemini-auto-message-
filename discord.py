@@ -56,15 +56,13 @@ def generate_reply(prompt, google_api_key, use_google_ai=True):
     Generates a reply to the user's message using Google Gemini AI or random responses.
     """
     if use_google_ai:
-        url = f'https://generativelanguage.googleapis.com/v1beta/models/projects/your-project-id/locations/your-location/models/your-model-name:generateContent?key={google_api_key}'
+        url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={google_api_key}'
         headers = {'Content-Type': 'application/json'}
 
         # Enhance the prompt
         enhanced_prompt = f"""
-        You are a friendly and helpful Discord bot. Please provide a short and concise response to the following message (maximum 200 characters):
+        Please provide a short and concise response to the following message (maximum 200 characters):
         {prompt}
-
-        If the message is unclear or inappropriate, respond with: "I'm sorry, I can't help with that."
         """
 
         data = {'contents': [{'parts': [{'text': enhanced_prompt}]}]}
@@ -186,7 +184,7 @@ def auto_send_messages(channel_id, send_interval):
     """
     while True:
         message_text = get_random_message()
-        message_text = trim_response(message_text, max_length=200)  # Limit the message length
+        message_text = trim_response(message_text, max_length=30)  # Limit the message length
         send_message(channel_id, message_text)
         log_message(f"Waiting {send_interval} seconds before sending the next message...")
         time.sleep(send_interval)
