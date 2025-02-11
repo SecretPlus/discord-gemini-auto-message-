@@ -13,137 +13,83 @@ google_api_key = os.getenv('GOOGLE_API_KEY')
 
 last_message_id = None
 bot_user_id = None
+last_ai_response = None  # Store the last AI response
 
-# List of inappropriate words
-inappropriate_words = ["inappropriate word 1", "inappropriate word 2", "nonsense"]
-
-def log_message(message, send_to_discord=False):
-    """
-    Logs the message. If specified, sends the error message to Discord.
-    """
+def log_message(message):
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}")
 
-    # If this is a critical error and needs to be sent to Discord
-    if send_to_discord:
-        send_error_message(channel_id, message)
+def generate_reply(prompt, use_google_ai=True, use_file_reply=False, language="en"):
+    """Generate a reply, avoiding duplication if using Google Gemini AI"""
 
-def send_error_message(channel_id, error_message):
-    """
-    Sends error messages to the Discord channel.
-    """
-    headers = {
-        'Authorization': f'{discord_token}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {'content': f"Error: {error_message}"}
-    
-    try:
-        response = requests.post(f"https://discord.com/api/v9/channels/{channel_id}/messages", json=payload, headers=headers)
-        response.raise_for_status()
-        if response.status_code == 201:
-            print("Error message sent to Discord.")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to send error message to Discord: {e}")
+    global last_ai_response  # Use the global variable so it can be accessed across sessions
 
-def is_appropriate(response_text):
-    """
-    Checks if the response contains inappropriate words.
-    """
-    for word in inappropriate_words:
-        if word in response_text:
-            return False
-    return True
+    if use_file_reply:
+        log_message("💬 Using message from file as reply.")
+        return {"candidates": [{"content": {"parts": [{"text": get_random_message()}]}}]}
 
-def is_high_quality(response_text):
-    """
-    Checks if the response is of good quality.
-    """
-    # Check response length
-    if len(response_text) < 10:  # If the response is less than 10 characters
-        return False
-    # Check for unrelated keywords
-    unrelated_keywords = ["I don't know", "I don't understand", "nonsense"]
-    for keyword in unrelated_keywords:
-        if keyword in response_text:
-            return False
-    return True
-
-def trim_response(response_text, max_length=200):
-    """
-    Trims the response to a specified maximum length.
-    """
-    if len(response_text) > max_length:
-        return response_text[:max_length] + "..."  # Shorten the response and add "..."
-    return response_text
-
-def generate_reply(prompt, google_api_key, use_google_ai=True):
-    """
-    Generates a reply to the user's message using Google Gemini AI or random responses.
-    """
     if use_google_ai:
+        # Language choices
+        if language == "en":
+            ai_prompt = f"{prompt}\n\nRespond with only one sentence in casual urban English, like a natural conversation, and do not use symbols."
+        else:
+            ai_prompt = f"{prompt}\n\nRespond with 1 sentence in casual Jakarta-style slang without any symbols."
+
         url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={google_api_key}'
         headers = {'Content-Type': 'application/json'}
+        data = {'contents': [{'parts': [{'text': ai_prompt}]}]}
 
-        # Enhance the prompt
-        enhanced_prompt = f"""
-        Please provide a short and concise response to the following message (maximum 200 characters):
-        {prompt}
-        """
+        for attempt in range(3):  # Try up to 3 times if AI repeats the same message
+            try:
+                response = requests.post(url, headers=headers, json=data)
+                response.raise_for_status()
+                ai_response = response.json()
 
-        data = {'contents': [{'parts': [{'text': enhanced_prompt}]}]}
+                # Get the text from AI response
+                response_text = ai_response['candidates'][0]['content']['parts'][0]['text']
 
-        try:
-            response = requests.post(url, headers=headers, json=data)
-            response.raise_for_status()
-            response_data = response.json()
-            response_text = response_data['candidates'][0]['content']['parts'][0]['text']
+                # Check if the AI response is the same as the last one
+                if response_text == last_ai_response:
+                    log_message("⚠️ AI provided the same response, retrying...")
+                    continue  # Try again with a new prompt
+                
+                last_ai_response = response_text  # Save the latest response
+                return ai_response
 
-            # Check if the response is appropriate and of good quality
-            if is_appropriate(response_text) and is_high_quality(response_text):
-                # Limit the response length
-                response_text = trim_response(response_text, max_length=200)
-                response_data['candidates'][0]['content']['parts'][0]['text'] = response_text
-                return response_data
-            else:
-                log_message("Inappropriate or low-quality response detected. It will not be sent.", send_to_discord=True)
-                return {"candidates": [{"content": {"parts": [{"text": "Sorry, I can't answer this question."}]}}]}
-        except requests.exceptions.RequestException as e:
-            log_message(f"Request failed: {e}", send_to_discord=True)
-            return {"candidates": [{"content": {"parts": [{"text": "Error processing the request. Please try again."}]}}]}
+            except requests.exceptions.RequestException as e:
+                log_message(f"⚠️ Request failed: {e}")
+                return None
+
+        log_message("⚠️ AI continues to provide the same response, using the last available response.")
+        return {"candidates": [{"content": {"parts": [{"text": last_ai_response or 'Sorry, unable to reply.'}]}}]}
+
     else:
-        # If not using Google Gemini AI, select a random response from pesan.txt
-        random_message = get_random_message()
-        random_message = trim_response(random_message, max_length=200)  # Limit the response length
-        return {"candidates": [{"content": {"parts": [{"text": random_message}]}}]}
+        return {"candidates": [{"content": {"parts": [{"text": get_random_message()}]}}]}
 
 def get_random_message():
-    """
-    Selects a random message from the pesan.txt file.
-    """
+    """Retrieve a random message from the file 'pesan.txt'"""
     try:
         with open('pesan.txt', 'r') as file:
             lines = file.readlines()
             if lines:
                 return random.choice(lines).strip()
             else:
-                log_message("File pesan.txt is empty.", send_to_discord=True)
-                return "No messages available."
+                log_message("pesan.txt file is empty.")
+                return "No available messages."
     except FileNotFoundError:
-        log_message("File pesan.txt not found.", send_to_discord=True)
-        return "File pesan.txt not found."
+        log_message("pesan.txt file not found.")
+        return "pesan.txt file not found."
 
-def send_message(channel_id, message_text, reply_to=None):
-    """
-    Sends a message to the Discord channel.
-    """
+def send_message(channel_id, message_text, reply_to=None, reply_mode=True):
+    """Send a message to Discord, with or without a reply"""
     headers = {
         'Authorization': f'{discord_token}',
         'Content-Type': 'application/json'
     }
 
     payload = {'content': message_text}
-    if reply_to:
+
+    # Only add reply if reply_mode is enabled
+    if reply_mode and reply_to:
         payload['message_reference'] = {'message_id': reply_to}
 
     try:
@@ -151,16 +97,14 @@ def send_message(channel_id, message_text, reply_to=None):
         response.raise_for_status()
 
         if response.status_code == 201:
-            print(f"Sent message: {message_text}")
+            log_message(f"✅ Sent message: {message_text}")
         else:
-            log_message(f"Failed to send message: {response.status_code}", send_to_discord=True)
+            log_message(f"⚠️ Failed to send message: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        log_message(f"Request error: {e}", send_to_discord=True)
+        log_message(f"⚠️ Request error: {e}")
 
-def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
-    """
-    Auto-reply mode for new messages in the Discord channel.
-    """
+def auto_reply(channel_id, read_delay, reply_delay, use_google_ai, use_file_reply, language, reply_mode):
+    """Function for auto-reply in Discord, avoiding AI duplication"""
     global last_message_id, bot_user_id
 
     headers = {'Authorization': f'{discord_token}'}
@@ -170,7 +114,7 @@ def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
         bot_info_response.raise_for_status()
         bot_user_id = bot_info_response.json().get('id')
     except requests.exceptions.RequestException as e:
-        log_message(f"Failed to retrieve bot information: {e}", send_to_discord=True)
+        log_message(f"⚠️ Failed to retrieve bot information: {e}")
         return
 
     while True:
@@ -188,47 +132,48 @@ def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
 
                     if (last_message_id is None or int(message_id) > int(last_message_id)) and author_id != bot_user_id and message_type != 8:
                         user_message = most_recent_message.get('content', '')
-                        log_message(f"Received message: {user_message}")
+                        log_message(f"💬 Received message: {user_message}")
 
-                        result = generate_reply(user_message, google_api_key, use_google_ai)
-                        response_text = result['candidates'][0]['content']['parts'][0]['text'] if result else "Sorry, I can't reply to this message."
+                        result = generate_reply(user_message, use_google_ai, use_file_reply, language)
+                        response_text = result['candidates'][0]['content']['parts'][0]['text'] if result else "Sorry, unable to reply."
 
-                        log_message(f"Waiting for {reply_delay} seconds before replying...")
+                        log_message(f"⏳ Waiting {reply_delay} seconds before replying...")
                         time.sleep(reply_delay)
-                        send_message(channel_id, response_text, reply_to=message_id)
+                        send_message(channel_id, response_text, reply_to=message_id if reply_mode else None, reply_mode=reply_mode)
                         last_message_id = message_id
 
-            log_message(f"Waiting for {read_delay} seconds before checking for new messages...")
+            log_message(f"⏳ Waiting {read_delay} seconds before checking for new messages...")
             time.sleep(read_delay)
         except requests.exceptions.RequestException as e:
-            log_message(f"Request error: {e}", send_to_discord=True)
+            log_message(f"⚠️ Request error: {e}")
             time.sleep(read_delay)
 
-def auto_send_messages(channel_id, send_interval):
-    """
-    Auto-send mode for random messages in the Discord channel.
-    """
-    while True:
-        message_text = get_random_message()
-        message_text = trim_response(message_text, max_length=30)  # Limit the message length
-        send_message(channel_id, message_text)
-        log_message(f"Waiting {send_interval} seconds before sending the next message...")
-        time.sleep(send_interval)
-
 if __name__ == "__main__":
-    use_reply = input("Do you want to use the reply feature? (y/n): ").lower() == 'y'
-    
+    use_reply = input("Do you want to use the auto-reply feature? (y/n): ").lower() == 'y'
     channel_id = input("Enter the channel ID: ")
-    
-    if use_reply:
-        use_google_ai = input("Do you want to use Google Gemini AI? (y/n): ").lower() == 'y'
-        read_delay = int(input("Set the delay for reading new messages (in seconds): "))
-        reply_delay = int(input("Set the delay for replying to messages (in seconds): "))
 
-        log_message("Reply mode activated...")
-        auto_reply(channel_id, read_delay, reply_delay, use_google_ai)
+    if use_reply:
+        use_google_ai = input("Use Google Gemini AI for replies? (y/n): ").lower() == 'y'
+        use_file_reply = input("Use messages from the 'pesan.txt' file? (y/n): ").lower() == 'y'
+        reply_mode = input("Do you want to reply to messages or just send messages? (reply/send): ").lower() == 'reply'
+        language_choice = input("Choose a language for the reply (id/en): ").lower()
+
+        if language_choice not in ["id", "en"]:
+            log_message("⚠️ Invalid language, defaulting to English.")
+            language_choice = "en"
+
+        read_delay = int(input("Set delay for reading new messages (in seconds): "))
+        reply_delay = int(input("Set delay for replying to messages (in seconds): "))
+
+        log_message(f"✅ Reply mode {'enabled' if reply_mode else 'disabled'} in {'Indonesian' if language_choice == 'id' else 'English'}...")
+        auto_reply(channel_id, read_delay, reply_delay, use_google_ai, use_file_reply, language_choice, reply_mode)
+
     else:
         send_interval = int(input("Set the interval for sending messages (in seconds): "))
+        log_message("✅ Random message sending mode active...")
 
-        log_message("Random message sending mode activated...")
-        auto_send_messages(channel_id, send_interval)
+        while True:
+            message_text = get_random_message()
+            send_message(channel_id, message_text, reply_mode=False)
+            log_message(f"⏳ Waiting {send_interval} seconds before sending the next message...")
+            time.sleep(send_interval)
