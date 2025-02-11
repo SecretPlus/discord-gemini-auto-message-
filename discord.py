@@ -17,8 +17,34 @@ bot_user_id = None
 # List of inappropriate words
 inappropriate_words = ["inappropriate word 1", "inappropriate word 2", "nonsense"]
 
-def log_message(message):
+def log_message(message, send_to_discord=False):
+    """
+    Logs the message. If specified, sends the error message to Discord.
+    """
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {message}")
+
+    # If this is a critical error and needs to be sent to Discord
+    if send_to_discord:
+        send_error_message(channel_id, message)
+
+def send_error_message(channel_id, error_message):
+    """
+    Sends error messages to the Discord channel.
+    """
+    headers = {
+        'Authorization': f'{discord_token}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {'content': f"Error: {error_message}"}
+    
+    try:
+        response = requests.post(f"https://discord.com/api/v9/channels/{channel_id}/messages", json=payload, headers=headers)
+        response.raise_for_status()
+        if response.status_code == 201:
+            print("Error message sent to Discord.")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to send error message to Discord: {e}")
 
 def is_appropriate(response_text):
     """
@@ -80,10 +106,10 @@ def generate_reply(prompt, google_api_key, use_google_ai=True):
                 response_data['candidates'][0]['content']['parts'][0]['text'] = response_text
                 return response_data
             else:
-                log_message("Inappropriate or low-quality response detected. It will not be sent.")
+                log_message("Inappropriate or low-quality response detected. It will not be sent.", send_to_discord=True)
                 return {"candidates": [{"content": {"parts": [{"text": "Sorry, I can't answer this question."}]}}]}
         except requests.exceptions.RequestException as e:
-            log_message(f"Request failed: {e}")
+            log_message(f"Request failed: {e}", send_to_discord=True)
             return {"candidates": [{"content": {"parts": [{"text": "Error processing the request. Please try again."}]}}]}
     else:
         # If not using Google Gemini AI, select a random response from pesan.txt
@@ -101,10 +127,10 @@ def get_random_message():
             if lines:
                 return random.choice(lines).strip()
             else:
-                log_message("File pesan.txt is empty.")
+                log_message("File pesan.txt is empty.", send_to_discord=True)
                 return "No messages available."
     except FileNotFoundError:
-        log_message("File pesan.txt not found.")
+        log_message("File pesan.txt not found.", send_to_discord=True)
         return "File pesan.txt not found."
 
 def send_message(channel_id, message_text, reply_to=None):
@@ -125,11 +151,11 @@ def send_message(channel_id, message_text, reply_to=None):
         response.raise_for_status()
 
         if response.status_code == 201:
-            log_message(f"Sent message: {message_text}")
+            print(f"Sent message: {message_text}")
         else:
-            log_message(f"Failed to send message: {response.status_code}")
+            log_message(f"Failed to send message: {response.status_code}", send_to_discord=True)
     except requests.exceptions.RequestException as e:
-        log_message(f"Request error: {e}")
+        log_message(f"Request error: {e}", send_to_discord=True)
 
 def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
     """
@@ -144,7 +170,7 @@ def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
         bot_info_response.raise_for_status()
         bot_user_id = bot_info_response.json().get('id')
     except requests.exceptions.RequestException as e:
-        log_message(f"Failed to retrieve bot information: {e}")
+        log_message(f"Failed to retrieve bot information: {e}", send_to_discord=True)
         return
 
     while True:
@@ -175,7 +201,7 @@ def auto_reply(channel_id, read_delay, reply_delay, use_google_ai):
             log_message(f"Waiting for {read_delay} seconds before checking for new messages...")
             time.sleep(read_delay)
         except requests.exceptions.RequestException as e:
-            log_message(f"Request error: {e}")
+            log_message(f"Request error: {e}", send_to_discord=True)
             time.sleep(read_delay)
 
 def auto_send_messages(channel_id, send_interval):
