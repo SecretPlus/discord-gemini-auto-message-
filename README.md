@@ -1,6 +1,6 @@
 #  Get your discord token:
 
-first Login your discord account
+first Login your discord account in Chrome browser
 Go to developer mode (F12)
 GO to console   type    ```allow pasting```
 
@@ -25,7 +25,7 @@ copy and paste
 ).exports.default.getToken()
 ```
 
-get discord token and save 
+get discord token and save without ' '
 
 
 
