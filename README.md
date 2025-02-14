@@ -60,6 +60,7 @@ sudo apt update && sudo apt upgrade -y
 apt install python3-pip
 apt install python3-venv
 python3 -m venv discord
+source discord/bin/activate
 pip install python-dotenv
 pip install -r requirements.txt 
 ```
@@ -88,7 +89,7 @@ example
 
 Set the delay for reading new messages (in seconds): 180
 
- Set the delay for replying to messages (in seconds): 20
+Set the delay for replying to messages (in seconds): 20
 
 
 
