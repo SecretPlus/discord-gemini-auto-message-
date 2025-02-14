@@ -40,7 +40,7 @@ Copy API Key
     
 
 ```
-git clone https://github.com/papa-multi/discord-gemini-auto-message-.git   
+git clone https://github.com/SecretPlus/discord-gemini-auto-message-.git 
 ```
 
  
